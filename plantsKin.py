@@ -3,14 +3,12 @@ import math
 import time
 
 InteractionsName = ['Tropism','ApicalTropism','Proprioception']
+CollectiveInteractionsName = ['Apical','Global']
 GrowthMode = ['Apical','Exponential']
 
 
 
 class skeletonElements:
-
-
-
     def __init__(self,x,theta0,curvature0,s,ds,psi0 = 0,psiC0 = 0,psiG0 = 0,dt = .1,growth = {'name':'no','intensity':1,'direction':0}):
         
         self.x = x
@@ -45,8 +43,6 @@ class skeletonElements:
         
         self.interactions.append({'name':name,'intensity':intensity,'direction':direction})
         
-
-
     def update(self):
         t0 = time.time()
 
@@ -76,15 +72,7 @@ class skeletonElements:
             self.ds += self.ds * self.growth['growthRate'] * self.dt 
 
 
-
-
-
-
-
 class Plant:
-
-
-
     def __init__(self,x0,theta0=0,curvature0=0,length0 = 1,psi0 = 0,psiC0 = 0,psiG0 = 0,N = 100,dt=.1,growth = 'no',growthZone = 1,growthRate = 1):
         
         self.x = []
@@ -134,18 +122,12 @@ class Plant:
             self.skeleton[k].updateSpatialPosition(self.skeleton[k-1].x,self.skeleton[k-1].theta,self.skeleton[k-1].psiC,self.skeleton[k-1].ds)
         for skel in self.skeleton:
             skel.updateApicalAngle(self.skeleton[-1].theta)
-            
-
 
     def addInteractions(self,name,intensity=0,direction = 0):
         if name in InteractionsName:
             self.interactions.append({'name':name,'intensity':intensity,'direction':direction})
-            
             for skel in self.skeleton:
-                skel.addInteractions(name,intensity,direction)
-                
-            
-            
+                skel.addInteractions(name,intensity,direction)            
         else:
             print(' --- '+name+' is not part of the known interactions ')
             print(' --- please use one of the following interaction :')
@@ -186,5 +168,41 @@ class Plant:
 
         self.flatten()
 
+
+class Roots:
+    def __init__(self,N,dx = .1,theta0=0,nElements = 1000,dt=0.1,growth = 'no',growthRate=1,growthZone = 1):
+        self.N = N
+        self.roots = []
+        self.interactions = []
+        self.collectiveInteractions = []
+        for k in range(0,N):
+            self.roots.append(Plant(x0 = [k*dx,0,0],theta0 = theta0,N = nElements,dt=dt,growth = growth,growthRate=growthRate,growthZone = growthZone))
+        
+    def update(self):
+
+        for root in self.roots:
+
+            root.update()
+
+    def addInteractions(self,name,intensity=0,direction = 0):
+        if name in InteractionsName:
+            self.interactions.append({'name':name,'intensity':intensity,'direction':direction})
+            for root in self.roots:
+                root.addInteractions(name,intensity,direction)
+        
+
+        else:
+            print(' --- '+name+' is not part of the known interactions ')
+            print(' --- please use one of the following interaction :')
+            for names in InteractionsName:
+                print(' --- --- '+str(names))
+
+    def addColectiveInteraction(self,name,repulsionZone,attractionZone,repulsionIntensity,attractionIntensity):
+        if name in CollectiveInteractionsName:
+        else:
+            print(' --- '+name+' is not part of the known collective interactions ')
+            print(' --- please use one of the following collective interaction :')
+            for names in CollectiveInteractionsName:
+                print(' --- --- '+str(names))
 
         
