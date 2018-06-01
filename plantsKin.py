@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import time
+import baseToolbox as bt
 
 InteractionsName = ['Tropism','ApicalTropism','Proprioception']
 CollectiveInteractionsName = ['Apical','Global']
@@ -8,7 +9,7 @@ GrowthMode = ['Apical','Exponential']
 
 
 
-class skeletonElements:
+class skelet onElements:
     def __init__(self,x,theta0,curvature0,s,ds,psi0 = 0,psiC0 = 0,psiG0 = 0,dt = .1,growth = {'name':'no','intensity':1,'direction':0}):
         
         self.x = x
@@ -92,7 +93,6 @@ class Plant:
         self.skeleton = []
 
         self.interactions = []
-
         x = self.x0
         theta = self.theta0
         curvature = self.curvature0
@@ -183,9 +183,12 @@ class Roots:
 
         for root in self.roots:
             if collectiveInteractions:
-
-
-                for interaction in 
+                self.flatten()
+                self.tipDistance()
+                for k in range(0,N):
+                    
+                    collectiveInteractionsList[k]['intensity'] = self.intensityCollective
+                    collectiveInteractionsList[k]['direction'] = self.directionCollective
             root.update()
 
     def addInteractions(self,name,intensity=0,direction = 0):
@@ -212,5 +215,19 @@ class Roots:
             print(' --- please use one of the following collective interaction :')
             for names in CollectiveInteractionsName:
                 print(' --- --- '+str(names))
+
+    def flatten(self):
+        
+        self.xTip=np.array([root.x[-1] for root in self.roots])
+        self.thetaTip=np.array([root.theta[-1] for root in self.roots])
+
+    def tipDistance(self):
+        self.distanceTip = bt.distPointToPoint(self.xTip)
+        self.AngleTip = bt.anglePointToPoint(self.xTip,self.thetaTip)
+
+        self.intensityCollective = 0
+        self.directionCollective = 0
+
+
 
         
