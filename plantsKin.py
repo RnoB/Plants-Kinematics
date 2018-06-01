@@ -187,8 +187,8 @@ class Roots:
                 self.tipDistance()
                 for k in range(0,N):
                     
-                    collectiveInteractionsList[k]['intensity'] = self.intensityCollective
-                    collectiveInteractionsList[k]['direction'] = self.directionCollective
+                    collectiveInteractionsList[k]['intensity'] = self.intensityCollective[k]
+                    collectiveInteractionsList[k]['direction'] = self.directionCollective[k]
             root.update()
 
     def addInteractions(self,name,intensity=0,direction = 0):
@@ -222,8 +222,7 @@ class Roots:
         self.thetaTip=np.array([root.theta[-1] for root in self.roots])
 
     def tipDistance(self):
-        self.distanceTip = bt.distPointToPoint(self.xTip)
-        self.AngleTip = bt.anglePointToPoint(self.xTip,self.thetaTip)
+        self.distanceTip,self.thetaTip = bt.distPointToPoint(self.xTip,self.thetaTip)
 
         self.intensityCollective = 0
         self.directionCollective = 0
