@@ -175,13 +175,17 @@ class Roots:
         self.roots = []
         self.interactions = []
         self.collectiveInteractions = []
+        self.collectiveInteractionsList = [] 
         for k in range(0,N):
             self.roots.append(Plant(x0 = [k*dx,0,0],theta0 = theta0,N = nElements,dt=dt,growth = growth,growthRate=growthRate,growthZone = growthZone))
         
     def update(self):
 
         for root in self.roots:
+            if collectiveInteractions:
 
+
+                for interaction in 
             root.update()
 
     def addInteractions(self,name,intensity=0,direction = 0):
@@ -197,8 +201,12 @@ class Roots:
             for names in InteractionsName:
                 print(' --- --- '+str(names))
 
-    def addColectiveInteraction(self,name,repulsionZone,attractionZone,repulsionIntensity,attractionIntensity):
+    def addColectiveInteraction(self,name,repulsionZone=2,attractionZone=1,repulsionIntensity=-1,attractionIntensity=1):
         if name in CollectiveInteractionsName:
+            collectiveInteractions.append({'name':name,'repulsionZone':repulsionZone,'attractionZone':attractionZone,'repulsionIntensity':repulsionIntensity,'attractionIntensity':attractionIntensity})
+            for root in self.roots:
+                root.addInteractions('Apical',0,0)
+                collectiveInteractionsList.append(root.interactions[-1])
         else:
             print(' --- '+name+' is not part of the known collective interactions ')
             print(' --- please use one of the following collective interaction :')
