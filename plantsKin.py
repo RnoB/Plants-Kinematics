@@ -24,6 +24,7 @@ class skeletonElements:
         self.dt = dt
         self.growth = growth.copy()
         self.interactions = []
+        self.thetaApical = theta0
 
     def updateCurvilinearAbscissa(self,s):
         self.s = s
@@ -131,6 +132,8 @@ class Plant:
             self.skeleton[k].updateCurvilinearAbscissa(s)
             self.skeleton[k].updateOrientation(self.skeleton[k-1].theta + self.skeleton[k-1].curvature * self.skeleton[k-1].ds)
             self.skeleton[k].updateSpatialPosition(self.skeleton[k-1].x,self.skeleton[k-1].theta,self.skeleton[k-1].psiC,self.skeleton[k-1].ds)
+        for skel in self.skeleton:
+            skel.updateApicalAngle(self.skeleton[-1].theta)
             
 
 
@@ -180,6 +183,7 @@ class Plant:
         for skel in self.skeleton:
             skel.update()
         self.updateSpatialPosition()
+
         self.flatten()
 
 
