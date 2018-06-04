@@ -12,10 +12,10 @@ def distPointToPoint(x,theta):
         X1 = np.tile(x[:,k],(len(x[:,k]),1))
         X2 = np.tile(x[:,k],(len(x[:,k]),1)).T
 
-        distance += (X1-X2)**2
-        X.append((X1-X2))
-    X1 = X[0]*cos(-theta)+X[1]*sin(-theta)
-    X2 = -X[0]*sin(-theta)+X[1]*cos(-theta)
+        distance += (X2-X1)**2
+        X.append((X2-X1))
+    X1 = X[0]*np.cos(-theta)+X[2]*np.sin(-theta)
+    X2 = -X[0]*np.sin(-theta)+X[2]*np.cos(-theta)
     angle = np.arctan2(X1,X2)
     distance = np.sqrt(distance)
     return distance, angle

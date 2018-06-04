@@ -9,7 +9,7 @@ GrowthMode = ['Apical','Exponential']
 
 
 
-class skelet onElements:
+class skeletonElements:
     def __init__(self,x,theta0,curvature0,s,ds,psi0 = 0,psiC0 = 0,psiG0 = 0,dt = .1,growth = {'name':'no','intensity':1,'direction':0}):
         
         self.x = x
@@ -182,13 +182,13 @@ class Roots:
     def update(self):
 
         for root in self.roots:
-            if collectiveInteractions:
-                self.flatten()
-                self.tipDistance()
+            if self.collectiveInteractions:
+
+                self.collectiveComputation()
                 for k in range(0,N):
                     
-                    collectiveInteractionsList[k]['intensity'] = self.intensityCollective[k]
-                    collectiveInteractionsList[k]['direction'] = self.directionCollective[k]
+                    self.collectiveInteractionsList[k]['intensity'] = self.intensityCollective[k]
+                    self.collectiveInteractionsList[k]['direction'] = self.directionCollective[k]
             root.update()
 
     def addInteractions(self,name,intensity=0,direction = 0):
@@ -204,17 +204,31 @@ class Roots:
             for names in InteractionsName:
                 print(' --- --- '+str(names))
 
-    def addColectiveInteraction(self,name,repulsionZone=2,attractionZone=1,repulsionIntensity=-1,attractionIntensity=1):
+    def addCollectiveInteraction(self,name,repulsionZone=2,attractionZone=1,repulsionIntensity=-1,attractionIntensity=1):
         if name in CollectiveInteractionsName:
-            collectiveInteractions.append({'name':name,'repulsionZone':repulsionZone,'attractionZone':attractionZone,'repulsionIntensity':repulsionIntensity,'attractionIntensity':attractionIntensity})
+            self.collectiveInteractions.append({'name':name,'repulsionZone':repulsionZone,'attractionZone':attractionZone,'repulsionIntensity':repulsionIntensity,'attractionIntensity':attractionIntensity})
             for root in self.roots:
-                root.addInteractions('Apical',0,0)
-                collectiveInteractionsList.append(root.interactions[-1])
+                root.addInteractions('ApicalTropism',0,0)
+                self.collectiveInteractionsList.append(root.interactions[-1])
         else:
             print(' --- '+name+' is not part of the known collective interactions ')
             print(' --- please use one of the following collective interaction :')
             for names in CollectiveInteractionsName:
                 print(' --- --- '+str(names))
+
+    def collectiveComputation(self):
+        self.flatten()
+        for interaction in self.collectiveInteractions:
+            if interaction['name'] == 'Apical':
+                self.tipDistance()
+
+                self.distanceTip[np.argwhere(self.distanceTip>0 and self.distanceTip<interaction['repulsionZone'])]=-1
+                self.distanceTip[np.argwhere(self.distanceTip>interaction['repulsionZone'] and self.distanceTip<interaction['attractionZone'])]=1
+                self.distanceTip[np.argwhere(self.distanceTip>interaction['attractionZone'])]=0
+                self.directionCollective = np.sum(self.distanceTip*self.thetaTip)/(self.N-1)
+                self.intensityCollective = self.directionCollective*0+1
+
+
 
     def flatten(self):
         
@@ -223,9 +237,7 @@ class Roots:
 
     def tipDistance(self):
         self.distanceTip,self.thetaTip = bt.distPointToPoint(self.xTip,self.thetaTip)
-
-        self.intensityCollective = 0
-        self.directionCollective = 0
+ 
 
 
 
