@@ -3,7 +3,7 @@ import math
 import time
 import baseToolbox as bt
 
-InteractionsName = ['Tropism','ApicalTropism','Proprioception']
+InteractionsName = ['Tropism','ApicalTropism','Proprioception','ApicalRelative']
 CollectiveInteractionsName = ['Apical','Global']
 GrowthMode = ['Apical','Exponential']
 
@@ -50,17 +50,20 @@ class skeletonElements:
         delta = 0
         deltaParrallel = 0
         deltaPerpendicular = 0
-
         for interaction in self.interactions:
-            
+            #print('interaction : '+str(interaction['direction']))
             interactionName = interaction['name']
             if interaction['name'] == 'Proprioception':
                 deltaParrallel +=interaction['intensity'] * self.curvature 
             else:
                 if interaction['name'] == 'Tropism':
-                    delta += interaction['intensity'] * (self.theta - interaction['direction'])
+                    delta += interaction['intensity'] * bt.angleDifference(self.theta,interaction['direction'])
                 elif interaction['name'] == 'ApicalTropism':
-                    delta += interaction['intensity'] * (self.thetaApical - interaction['direction'])
+                    delta += interaction['intensity'] * bt.angleDifference(self.thetaApical,interaction['direction'])
+                elif interaction['name'] == 'ApicalRelative':
+                    delta += interaction['intensity'] * interaction['direction']
+        #print('angle : '+str(self.thetaApical))
+                 
         deltaParrallel +=   delta * np.cos(self.psiG - self.psiC)
         deltaPerpendicular +=   delta * np.sin(self.psiG - self.psiC)
         
@@ -118,7 +121,7 @@ class Plant:
         for k in range(1,len(self.skeleton)):
             s += self.skeleton[k-1].ds
             self.skeleton[k].updateCurvilinearAbscissa(s)
-            self.skeleton[k].updateOrientation(self.skeleton[k-1].theta + self.skeleton[k-1].curvature * self.skeleton[k-1].ds)
+            self.skeleton[k].updateOrientation(bt.angleDifference(self.skeleton[k-1].theta, - self.skeleton[k-1].curvature * self.skeleton[k-1].ds))
             self.skeleton[k].updateSpatialPosition(self.skeleton[k-1].x,self.skeleton[k-1].theta,self.skeleton[k-1].psiC,self.skeleton[k-1].ds)
         for skel in self.skeleton:
             skel.updateApicalAngle(self.skeleton[-1].theta)
@@ -162,11 +165,16 @@ class Plant:
 
     def update(self):
         self.updateGrowth()
+        
         for skel in self.skeleton:
             skel.update()
         self.updateSpatialPosition()
 
         self.flatten()
+
+    def updateCollectiveInteraction(self):
+        for skel in self.skeleton:
+            skel.interactions = self.interactions
 
 
 class Roots:
@@ -180,16 +188,20 @@ class Roots:
             self.roots.append(Plant(x0 = [k*dx,0,0],theta0 = theta0,N = nElements,dt=dt,growth = growth,growthRate=growthRate,growthZone = growthZone))
         
     def update(self):
+        
+        if self.collectiveInteractions:
 
-        for root in self.roots:
-            if self.collectiveInteractions:
+            self.collectiveComputation()
+            for k in range(0,self.N):
+                
+                self.collectiveInteractionsList[k]['intensity'] = self.intensityCollective[k]
+                self.collectiveInteractionsList[k]['direction'] = self.directionCollective[k]
+                self.roots[k].updateCollectiveInteraction()
 
-                self.collectiveComputation()
-                for k in range(0,N):
-                    
-                    self.collectiveInteractionsList[k]['intensity'] = self.intensityCollective[k]
-                    self.collectiveInteractionsList[k]['direction'] = self.directionCollective[k]
-            root.update()
+                self.roots[k].update()
+        else:
+            for root in self.roots:
+                root.update()
 
     def addInteractions(self,name,intensity=0,direction = 0):
         if name in InteractionsName:
@@ -204,11 +216,11 @@ class Roots:
             for names in InteractionsName:
                 print(' --- --- '+str(names))
 
-    def addCollectiveInteraction(self,name,repulsionZone=2,attractionZone=1,repulsionIntensity=-1,attractionIntensity=1):
+    def addCollectiveInteraction(self,name,repulsionZone=1,attractionZone=2,repulsionIntensity=-1,attractionIntensity=1):
         if name in CollectiveInteractionsName:
             self.collectiveInteractions.append({'name':name,'repulsionZone':repulsionZone,'attractionZone':attractionZone,'repulsionIntensity':repulsionIntensity,'attractionIntensity':attractionIntensity})
             for root in self.roots:
-                root.addInteractions('ApicalTropism',0,0)
+                root.addInteractions('ApicalRelative',0,0)
                 self.collectiveInteractionsList.append(root.interactions[-1])
         else:
             print(' --- '+name+' is not part of the known collective interactions ')
@@ -221,12 +233,15 @@ class Roots:
         for interaction in self.collectiveInteractions:
             if interaction['name'] == 'Apical':
                 self.tipDistance()
-
-                self.distanceTip[np.argwhere(self.distanceTip>0 and self.distanceTip<interaction['repulsionZone'])]=-1
-                self.distanceTip[np.argwhere(self.distanceTip>interaction['repulsionZone'] and self.distanceTip<interaction['attractionZone'])]=1
-                self.distanceTip[np.argwhere(self.distanceTip>interaction['attractionZone'])]=0
-                self.directionCollective = np.sum(self.distanceTip*self.thetaTip)/(self.N-1)
-                self.intensityCollective = self.directionCollective*0+1
+                interactionTip =np.copy(self.distanceTip)
+                interactionTip[(self.distanceTip>0) & (self.distanceTip<interaction['repulsionZone'])]=-1
+                interactionTip[(self.distanceTip>interaction['repulsionZone']) & (self.distanceTip<interaction['attractionZone'])]=1
+                interactionTip[self.distanceTip>interaction['attractionZone']]=0
+                
+                self.directionCollective = np.sum(interactionTip*self.alphaTip,0)/(self.N-1)
+                
+                self.intensityCollective = self.directionCollective*0
+                self.intensityCollective[np.sum(np.abs(interactionTip),0)>0] =1.0
 
 
 
@@ -236,8 +251,9 @@ class Roots:
         self.thetaTip=np.array([root.theta[-1] for root in self.roots])
 
     def tipDistance(self):
-        self.distanceTip,self.thetaTip = bt.distPointToPoint(self.xTip,self.thetaTip)
- 
+        self.distanceTip,self.alphaTip = bt.distPointToPoint(self.xTip,self.thetaTip)
+
+        
 
 
 

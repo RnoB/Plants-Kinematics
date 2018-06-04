@@ -1,5 +1,5 @@
 import numpy as np 
-
+import math
 
 
 
@@ -18,5 +18,16 @@ def distPointToPoint(x,theta):
     X2 = -X[0]*np.sin(-theta)+X[2]*np.cos(-theta)
     angle = np.arctan2(X1,X2)
     distance = np.sqrt(distance)
+
+    np.fill_diagonal(distance,0)
+    np.fill_diagonal(angle,0)
+
     return distance, angle
+
+
+
+def angleDifference(A1, A2):
+    A = A1 - A2
+    A = (A + math.pi) % (2 * math.pi) - math.pi
+    return A
 
