@@ -31,3 +31,17 @@ def angleDifference(A1, A2):
     A = (A + math.pi) % (2 * math.pi) - math.pi
     return A
 
+
+
+def writeCsvRoots(X,name,path,writeMode = 0):
+    if writeMode == 0:
+        fd = open(path+name,'wb')
+    elif writeMode == 1:
+        fd = open(path+name,'ab')
+    
+    wri = X
+
+
+
+    np.savetxt(fd,np.c_[wri],delimiter=',',fmt= '%5.5f')
+    fd.close()
