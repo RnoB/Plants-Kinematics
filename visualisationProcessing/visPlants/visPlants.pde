@@ -14,15 +14,15 @@ void setup()
 {
   grabImages = true;
   colorMode(HSB);
-  size(1080, 512);
+  size(1080, 1080);
   background(255);
   smooth(8);
   scale0=318;
   if(!grabImages)
   {
-    frameRate(12);
+    //frameRate(12);
   }
-  fading = 200;
+  fading = 255;
   tTrailMax=30;
 
   File[] files = listFiles(path, "extension=csv");

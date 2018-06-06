@@ -82,7 +82,7 @@ class Skeleton
   Skeleton(float scale0)
   {
     scale = scale0;
-    step = 9;
+    step = 1;
   }
 
   void updateValues(int idx, float x0, float y0, float z0)
