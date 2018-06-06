@@ -1,27 +1,35 @@
 
 int fading;
-String path = "C:/Users/renaud/Documents/trialCsv/";
+String path = "C:/Users/renaud/Documents/trialCsv/02/";
 ArrayList<Plants> plants = new ArrayList<Plants>(); 
 int NElements = 1000;
 int frame;
 int frameMax;
 int nPlants;
 int tTrailMax;
+float scale0;
+boolean grabImages;
+
 void setup()
 {
+  grabImages = true;
   colorMode(HSB);
   size(1080, 512);
   background(255);
-  smooth();
-  frameRate(12);
-  fading = 255;
+  smooth(8);
+  scale0=318;
+  if(!grabImages)
+  {
+    frameRate(12);
+  }
+  fading = 200;
   tTrailMax=30;
 
   File[] files = listFiles(path, "extension=csv");
   //print(files.length);
   for (int k = 0; k<files.length; k++)
   {
-    plants.add(new Plants(tTrailMax));
+    plants.add(new Plants(tTrailMax,scale0));
     plants.get(plants.size()-1).updateFile(path+files[k].getName());
   }
   frameMax = plants.get(plants.size()-1).tMax;
@@ -43,6 +51,18 @@ void draw()
   frame++;
   if (frame>frameMax-1)
   {
-    frame =0;
+    if(grabImages)
+    {
+      exit();
+    }
+    else
+    {
+      frame =0;
+    }
+  }
+  
+  if(grabImages)
+  {
+    saveFrame("images-######.png");
   }
 }

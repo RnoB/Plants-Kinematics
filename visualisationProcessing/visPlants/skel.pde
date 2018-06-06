@@ -6,9 +6,9 @@ class Plants
   float scale;
   ArrayList<Float> xTrail = new ArrayList<Float>(); 
   ArrayList<Float> zTrail = new ArrayList<Float>(); 
-  Plants(int tTrail0)
+  Plants(int tTrail0,float scale0)
   {
-    scale=300;
+    scale=scale0;
     tTrail = tTrail0;
   }
 
@@ -30,8 +30,9 @@ class Plants
     }
   }
 
-  void draw(int frame)
+  void trail()
   {
+    
     if (frame == 0)
     {
       xTrail.clear();
@@ -44,20 +45,29 @@ class Plants
       xTrail.remove(0);
       zTrail.remove(0);
     }
-    //stroke(034,190,190,140);
+    stroke(034,190,100,40);
+    strokeWeight(2);
+    noFill();
     //fill(0,50);
 
-    noStroke();
+    
+    beginShape();
     int step=1;
-    for (int j=step; j<xTrail.size(); j+=step)
+    for (int j=0; j<xTrail.size(); j+=step)
     {
-      fill(255,180,120,60*(float)j/(float)tTrail);
-      //strokeWeight(5.0*(float)j/(float)tTrail);
+      curveVertex(xTrail.get(j)*scale, zTrail.get(j)*scale);
+      //stroke(255,180,120,60*(float)j/(float)tTrail);
+      //strokeWeight(2.0*(float)j/(float)tTrail);
       //line(xTrail.get(j-step)*scale, zTrail.get(j-step)*scale, xTrail.get(j)*scale, zTrail.get(j)*scale);
-      ellipse(xTrail.get(j)*scale, zTrail.get(j)*scale,10.0*(float)j/(float)tTrail,10.0*(float)j/(float)tTrail);
+      //ellipse(xTrail.get(j)*scale, zTrail.get(j)*scale,5.0*(float)j/(float)tTrail,5.0*(float)j/(float)tTrail);
     }
+    endShape();
+  }
+  void draw(int frame)
+  {
+
     
-    
+    trail();
     skel.get(frame).draw();
   }
 }
@@ -82,15 +92,19 @@ class Skeleton
     z[idx] = z0;
   }
 
+  
   void draw()
   {
-    stroke(0,10);
-    strokeWeight(4);
-    
-    for (int j=step; j<NElements; j+=step)
+    stroke(0,80);
+    strokeWeight(3);
+    noFill();
+    beginShape();
+    for (int j=0; j<NElements; j+=step)
     {
-      line(x[j-step]*scale, z[j-step]*scale, x[j]*scale, z[j]*scale);
+      curveVertex(x[j]*scale, z[j]*scale);
+      //line(x[j-step]*scale, z[j-step]*scale, x[j]*scale, z[j]*scale);
     }
+    endShape();
     noStroke();
     fill(255,200,220,200);
     ellipse(x[NElements-1]*scale,z[NElements-1]*scale,10,10);
