@@ -30,7 +30,10 @@ def FirstGen():
                                           theta0 real,
                                           nElements integer,
                                           growth text, growthRate real, growthZone real, 
-                                          tropism text, collectiveTropism text)''')
+                                          tropismIntensity real, tropismDirection real, 
+                                          apicalTropismIntensity real,apicalTropismDirection real,
+                                          collectiveTropism text,collectiveTropismIntensity real,
+                                          proprioception real)''')
     conn.commit()
     conn.close()
     conn = sqlite3.connect(dbName)
@@ -40,7 +43,10 @@ def FirstGen():
                                           theta0 real,
                                           nElements integer,
                                           growth text, growthRate real, growthZone real, 
-                                          tropism text, collectiveTropism text)''')
+                                          tropismIntensity real, tropismDirection real, 
+                                          apicalTropismIntensity real,apicalTropismDirection real,
+                                          collectiveTropism text,collectiveTropismIntensity real,
+                                          proprioception real)''')
     conn.commit()
     conn.close()
 
@@ -54,41 +60,48 @@ def SecondGen():
 def dbFiller():
     xMax = 20
     v0 =1
-    Nrange=[2,3,4,5,10,20]
-    drag = 0.1
+    Nrange=[2,3,4,5,6,7,8,9,10,20,30,50,100]
+    
     dt = 0.01
-
+    dxRange = [0,0.1,0.2,0.3,0.4,0.5,1.0,2.0]
     tMax =1e5   
+    theta0Range = [0]
+    nElementsRange = [1000]
 
-    nPhiRange = [256]
+    growthRange = ['None','Apical','Exponential']
+    growthZones = [1.0]
+    growthRates = [1.0]
+    
+    tropismRange = [0]
+    tropismDirections = [0]
+    apicalTropismRange = [0,0.1,0.2,0.5,1.0,2.0,5.0,10.0]
+    apicalTropismDirections = [0]
+    proprioceptionRange = [0,0.1,0.2,0.5,1.0,2.0,5.0,10.0]
+    collectiveTropisms = ['Apical']
+    collectiveTropismRange = [0,0.1,0.2,0.5,1.0,2.0,5.0,10.0]
 
-    VuRange=-np.array([0.5,1.0,2])
-    VpRange=-np.array([0.5,1.0,2])
-    VzRange=-np.array([0.5,1.0,2])
-    dVuRange= [0.05, .1,0.2]
-    dVpRange= [0.05, .1,0.2]
-    dVzRange= [0.05, .1,0.2]
 
-    VuuRange = [1.0]
-    VppRange = [1.0]
-    VzzRange = [1.0]
+
+
     conn = sqlite3.connect(parametersName)
     c = conn.cursor()
     for N in Nrange:
-        for nPhi in nPhiRange:
-            for Vu in VuRange:
-                for Vp in VpRange:
-                    for Vz in VzRange:
-                        for dVu in dVuRange:
-                            for dVp in dVpRange:
-                                for dVz in dVzRange: 
-                                    for Vuu in VuuRange:
-                                        for Vpp in VppRange:
-                                            for Vzz in VzzRange:
-                                                expId = str(uuid.uuid4())
-                                                values = [expId,N,nPhi,dt,v0,drag,Vuu,Vpp,Vzz,Vu,Vp,Vz,dVu,dVp,dVz]
-                        
-                                                c.execute("INSERT INTO parameters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",values)
+        for dx in dxRange:
+            for growth in growthRange:
+                for growthZone in growthZones:
+                    for growthRate in growthRates:
+                        for tropism in tropismRange:
+                            for tropismDirection in tropismDirections:
+                                for apicalTropism in apicalTropismRange:
+                                    for apicalTropismDirection in apicalTropismDirections:
+                                        for proprioception in proprioceptionRange:
+                                            for collectiveTropism in collectiveTropisms:
+                                                for collectiveTropismIntensity in collectiveTropismRange:
+
+                                                    expId = str(uuid.uuid4())
+                                                    values = [expId,N,nPhi,dt,v0,drag,Vuu,Vpp,Vzz,Vu,Vp,Vz,dVu,dVp,dVz]
+                            
+                                                    c.execute("INSERT INTO parameters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",values)
     conn.commit()
     conn.close()
 
@@ -110,6 +123,7 @@ def checkExpParam(expId):
     dt  = (cursorParam.fetchall())[0][0]
     cursorParam.execute("Select nElements from parameters where id = ?",(expId,))
     nElements  = (cursorParam.fetchall())[0][0]
+
     cursorParam.execute("Select growth from parameters where id = ?",(expId,))
     growth  = (cursorParam.fetchall())[0][0]
     cursorParam.execute("Select growthRate from parameters where id = ?",(expId,))
@@ -117,27 +131,22 @@ def checkExpParam(expId):
     cursorParam.execute("Select growthZone from parameters where id = ?",(expId,))
     growthZone  = (cursorParam.fetchall())[0][0]
     
-    cursorParam.execute("Select tropism from parameters where id = ?",(expId,))
-    tropism  = eval((cursorParam.fetchall())[0][0])
-    cursorParam.execute("Select collectiveTropism from parameters where id = ?",(expId,))
-    collectiveTropism  = eval((cursorParam.fetchall())[0][0])
-    cursorParam.execute("Select Vp from parameters where id = ?",(expId,))
-    Vp  = (cursorParam.fetchall())[0][0]
-    cursorParam.execute("Select Vz from parameters where id = ?",(expId,))
-    Vz  = (cursorParam.fetchall())[0][0]
-    cursorParam.execute("Select dVu from parameters where id = ?",(expId,))
-    dVu  = (cursorParam.fetchall())[0][0]
-    cursorParam.execute("Select dVp from parameters where id = ?",(expId,))
-    dVp  = (cursorParam.fetchall())[0][0]
-    cursorParam.execute("Select dVz from parameters where id = ?",(expId,))
-    dVz  = (cursorParam.fetchall())[0][0]
-    cursorParam.execute("Select Vuu from parameters where id = ?",(expId,))
-    Vuu  = (cursorParam.fetchall())[0][0]
-    cursorParam.execute("Select Vpp from parameters where id = ?",(expId,))
-    Vpp  = (cursorParam.fetchall())[0][0]
-    cursorParam.execute("Select Vzz from parameters where id = ?",(expId,))
-    Vzz  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select tropismIntensity from parameters where id = ?",(expId,))
+    tropismIntensity  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select tropismDirection from parameters where id = ?",(expId,))
+    tropismDirection  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select apicalTropismIntensity from parameters where id = ?",(expId,))
+    apicalTropismIntensity  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select apicalTropismDirection from parameters where id = ?",(expId,))
+    apicalTropismDirection  = (cursorParam.fetchall())[0][0]
 
+    cursorParam.execute("Select collectiveTropismIntensity from parameters where id = ?",(expId,))
+    collectiveTropismIntensity  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select collectiveTropism from parameters where id = ?",(expId,))
+    collectiveTropism  = (cursorParam.fetchall())[0][0]
+
+    cursorParam.execute("Select proprioception from parameters where id = ?",(expId,))
+    proprioceptionIntensity  = (cursorParam.fetchall())[0][0]
 
 
 
@@ -145,7 +154,7 @@ def checkExpParam(expId):
     
     connParam.close()
 
-    return N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropism,collectiveTropism
+    return N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropismIntensity , tropismDirection , apicalTropismIntensity ,apicalTropismDirection , collectiveTropism ,collectiveTropismIntensity ,proprioception 
 
 
 def startSimulation(expId):
