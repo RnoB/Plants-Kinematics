@@ -25,6 +25,8 @@ tMax = 1e5
 xMax =20
 lockDB = False
 replicate = 1
+path = '/mnt/d/Plants-Kinematics/data/'
+
 
 def FirstGen():
     conn = sqlite3.connect(parametersName)
@@ -83,12 +85,12 @@ def dbFiller():
     
     tropismRange = [0]
     tropismDirections = [0]
-    apicalTropismRange = -np.array([0,1.0,10.0])
+    apicalTropismRange = -np.array([0.0])
     apicalTropismDirections = [0]
-    proprioceptionRange = -np.array([0,1.0,10.0])
+    proprioceptionRange = -np.array([0.0])
     collectiveTropisms = ['Apical']
-    collectiveTropismAttractionZoneRange = -np.array([0,1.0,10.0])
-    collectiveTropismRepulsionZoneRange = -np.array([0,1.0,10.0])
+    collectiveTropismAttractionZoneRange = [2.0]
+    collectiveTropismRepulsionZoneRange = [1.0]
     collectiveTropismAttractionIntensityRange = -np.array([0,1.0,10.0])
     collectiveTropismRepulsionIntensityRange = -np.array([0,1.0,10.0])
 
@@ -110,12 +112,22 @@ def dbFiller():
                                             for apicalTropismDirection in apicalTropismDirections:
                                                 for proprioception in proprioceptionRange:
                                                     for collectiveTropism in collectiveTropisms:
-                                                        for collectiveTropismIntensity in collectiveTropismRange:
+                                                        for collectiveTropismAttractionZone in collectiveTropismAttractionZoneRange:
+                                                            for collectiveTropismRepulsionZone in collectiveTropismRepulsionZoneRange:
+                                                                for collectiveTropismAttractionIntensity in collectiveTropismAttractionIntensityRange:
+                                                                    for collectiveTropismRepulsionIntensity in collectiveTropismRepulsionIntensityRange:
 
-                                                            expId = str(uuid.uuid4())
-                                                            values = [expId,N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropism,tropismDirection,apicalTropism,apicalTropismDirection,collectiveTropism,collectiveTropismIntensity,proprioception]
-                                    
-                                                            c.execute("INSERT INTO parameters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",values)
+                                                                        expId = str(uuid.uuid4())
+                                                                        values = [expId,N,dx,dt,theta0,nElements,\
+                                                                                    growth,growthRate,growthZone,\
+                                                                                    tropism,tropismDirection,\
+                                                                                    apicalTropism,apicalTropismDirection,\
+                                                                                    collectiveTropism,\
+                                                                                    collectiveTropismAttractionZone,collectiveTropismRepulsionZone ,\
+                                                                                    collectiveTropismAttractionIntensity,collectiveTropismRepulsionIntensity,\
+                                                                                    proprioception]
+                                                
+                                                                        c.execute("INSERT INTO parameters VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",values)
     conn.commit()
     conn.close()
 
@@ -153,12 +165,18 @@ def checkExpParam(expId):
     apicalTropismIntensity  = (cursorParam.fetchall())[0][0]
     cursorParam.execute("Select apicalTropismDirection from parameters where id = ?",(expId,))
     apicalTropismDirection  = (cursorParam.fetchall())[0][0]
-
-    cursorParam.execute("Select collectiveTropismIntensity from parameters where id = ?",(expId,))
-    collectiveTropismIntensity  = (cursorParam.fetchall())[0][0]
     cursorParam.execute("Select collectiveTropism from parameters where id = ?",(expId,))
     collectiveTropism  = (cursorParam.fetchall())[0][0]
 
+
+    cursorParam.execute("Select collectiveTropismAttractionZone from parameters where id = ?",(expId,))
+    collectiveTropismAttractionZone  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select collectiveTropismAttractionIntensity from parameters where id = ?",(expId,))
+    collectiveTropismAttractionIntensity  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select collectiveTropismRepulsionZone from parameters where id = ?",(expId,))
+    collectiveTropismRepulsionZone  = (cursorParam.fetchall())[0][0]
+    cursorParam.execute("Select collectiveTropismRepulsionIntensity from parameters where id = ?",(expId,))
+    collectiveTropismRepulsionIntensity  = (cursorParam.fetchall())[0][0]
     cursorParam.execute("Select proprioception from parameters where id = ?",(expId,))
     proprioceptionIntensity  = (cursorParam.fetchall())[0][0]
 
@@ -168,17 +186,49 @@ def checkExpParam(expId):
     
     connParam.close()
 
-    return N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropismIntensity , tropismDirection , apicalTropismIntensity ,apicalTropismDirection , collectiveTropism ,collectiveTropismIntensity ,proprioception 
+    return N,dx,dt,theta0,nElements,\
+            growth,growthRate,growthZone,\
+            tropismIntensity , tropismDirection ,\
+            apicalTropismIntensity ,apicalTropismDirection,\
+            collectiveTropism ,\
+            collectiveTropismAttractionZone,collectiveTropismRepulsionZone,\
+            collectiveTropismAttractionIntensity,collectiveTropismRepulsionIntensity,\
+            proprioception
 
 
-def rootsSim(N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropismIntensity , tropismDirection , apicalTropismIntensity ,apicalTropismDirection , collectiveTropism ,collectiveTropismIntensity ,expId)
-    roots = pk.Roots(N,dx,theta0 =theta0,growth=growth,nElements = nElements,,dt=dt,growthRate=growthRate,growthZone = growthZone)
+def pather(expId):
+
+    path = '/mnt/d/Plants-Kinematics/data/'
+    if not os.path.exists(path):
+        os.makedirs(path)
+    path = path  + expId+ '/'
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    return path
+
+
+def rootsSim(N,dx,dt,theta0,nElements,\
+                    growth,growthRate,growthZone,\
+                    tropismIntensity , tropismDirection ,\
+                    apicalTropismIntensity ,apicalTropismDirection ,\
+                    collectiveTropism ,
+                    collectiveTropismAttractionZone,collectiveTropismRepulsionZone ,\
+                    collectiveTropismAttractionIntensity,collectiveTropismRepulsionIntensity,\
+                    expId):
+    dataPath = pather(expId)
+    roots = pk.Roots(N,dx,theta0 =theta0,growth=growth,nElements = nElements,dt=dt,growthRate=growthRate,growthZone = growthZone)
         
     roots.addInteractions(name = 'ApicalTropism' ,intensity=apicalTropismIntensity,direction = apicalTropismDirection)
     roots.addInteractions(name = 'Tropism' ,intensity=tropismIntensity,direction = tropismDirection)
     roots.addInteractions(name = 'Proprioception' ,intensity=proprioception)
 
-    roots.addCollectiveInteraction(name =collectiveTropism,)
+    roots.addCollectiveInteraction(name =collectiveTropism,attractionZone=collectiveTropismAttractionZone,repulsionZone=collectiveTropismRepulsionZone ,\
+                    attractionIntensity=collectiveTropismAttractionIntensity,repulsionIntensity=collectiveTropismRepulsionIntensity)
+    for t in range(0,int(tMax/dt)):
+        roots.update()
+        for j in range(0,len(roots.roots)):
+            bt.writeCsvRoots(roots.roots[j].x,dataPath+'root'+str(j).zfill(3)+'.csv','./',writeMode = 1)
 
 
 def startSimulation(expId):
@@ -192,9 +242,23 @@ def startSimulation(expId):
         #c.execute("INSERT INTO simulation VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",values)
 
         time.sleep(random.random())
-        N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropismIntensity , tropismDirection , apicalTropismIntensity ,apicalTropismDirection , collectiveTropism ,collectiveTropismIntensity ,proprioception = checkExpParam(expId[0])
+        N,dx,dt,theta0,nElements,\
+            growth,growthRate,growthZone,\
+            tropismIntensity , tropismDirection ,\
+            apicalTropismIntensity ,apicalTropismDirection,\
+            collectiveTropism ,\
+            collectiveTropismAttractionZone,collectiveTropismRepulsionZone,\
+            collectiveTropismAttractionIntensity,collectiveTropismRepulsionIntensity,\
+            proprioception = checkExpParam(expId[0])
         print([checkExpParam(expId[0])])
-        rootsSim(N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropismIntensity , tropismDirection , apicalTropismIntensity ,apicalTropismDirection , collectiveTropism ,collectiveTropismIntensity ,expId)
+        rootsSim(N,dx,dt,theta0,nElements,\
+                    growth,growthRate,growthZone,\
+                    tropismIntensity , tropismDirection ,\
+                    apicalTropismIntensity ,apicalTropismDirection ,\
+                    collectiveTropism ,
+                    collectiveTropismAttractionZone,collectiveTropismRepulsionZone ,\
+                    collectiveTropismAttractionIntensity,collectiveTropismRepulsionIntensity,\
+                    expId)
 
 
         while lockDB:
@@ -203,9 +267,16 @@ def startSimulation(expId):
         conn = sqlite3.connect(dbName, check_same_thread=False)
         c = conn.cursor()
         
-        values = [expId[0],expId[1],datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),N,dx,dt,theta0,nElements,growth,growthRate,growthZone,tropism,tropismDirection,apicalTropism,apicalTropismDirection,collectiveTropism,collectiveTropismIntensity,proprioception]
+        values = [expId[0],expId[1],datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),N,dx,dt,theta0,nElements,\
+                                                                                    growth,growthRate,growthZone,\
+                                                                                    tropism,tropismDirection,\
+                                                                                    apicalTropism,apicalTropismDirection,\
+                                                                                    collectiveTropism,\
+                                                                                    collectiveTropismAttractionZone,collectiveTropismRepulsionZone ,\
+                                                                                    collectiveTropismAttractionIntensity,collectiveTropismRepulsionIntensity,\
+                                                                                    proprioception]
         print('----- writing in database')                    
-        c.execute("INSERT INTO simulation VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",values)
+        c.execute("INSERT INTO simulation VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",values)
         conn.commit()
         conn.close()
         print('----- wrote in database')    
