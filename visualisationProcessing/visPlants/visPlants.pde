@@ -1,6 +1,6 @@
 
 int fading;
-String path = "C:/Users/renaud/Documents/trialCsv/02/";
+String path = "C:/Users/renaud/Documents/Plants-Kinematics/data/855a256a-e5d7-4168-b6d9-a7a340606d97/";
 ArrayList<Plants> plants = new ArrayList<Plants>(); 
 int NElements = 1000;
 int frame;
